@@ -186,6 +186,8 @@ decl_storage! {
 		// variable to its underlying value.
 		pub Randomness get(fn randomness): schnorrkel::Randomness;
 
+		pub AuthoritiesWeights get(fn authorities_weights): map hasher(blake2_128_concat) AuthorityId => BabeAuthorityWeight = 1;
+
 		/// Next epoch configuration, if changed.
 		NextEpochConfig: Option<NextConfigDescriptor>;
 
@@ -367,6 +369,15 @@ impl<T: Trait> pallet_session::ShouldEndSession<T::BlockNumber> for Module<T> {
 }
 
 impl<T: Trait> Module<T> {
+	/// Assign new weight to authority.
+	pub fn assign_authority_weight(
+        authority_id: AuthorityId,
+        weight: BabeAuthorityWeight,
+    ) -> DispatchResult {
+        AuthoritiesWeights::insert(authority_id, weight);
+        Ok(())
+    }
+
 	/// Determine the BABE slot duration based on the Timestamp module configuration.
 	pub fn slot_duration() -> T::Moment {
 		// we double the minimum block-period so each author can always propose within
@@ -713,13 +724,13 @@ impl<T: Trait> pallet_session::OneSessionHandler<T::AccountId> for Module<T> {
 	fn on_new_session<'a, I: 'a>(_changed: bool, validators: I, queued_validators: I)
 		where I: Iterator<Item=(&'a T::AccountId, AuthorityId)>
 	{
-		let authorities = validators.map(|(_account, k)| {
-			(k, 1)
-		}).collect::<Vec<_>>();
+		let authorities = validators
+            .map(|(_account, k)| (k.clone(), <Module<T>>::authorities_weights(k.clone())))
+            .collect::<Vec<_>>();
 
-		let next_authorities = queued_validators.map(|(_account, k)| {
-			(k, 1)
-		}).collect::<Vec<_>>();
+        let next_authorities = queued_validators
+            .map(|(_account, k)| (k.clone(), <Module<T>>::authorities_weights(k.clone())))
+            .collect::<Vec<_>>();
 
 		Self::enact_epoch_change(authorities, next_authorities)
 	}
