@@ -54,8 +54,9 @@ use std::sync::Arc;
 use wasm_timer::SystemTime;
 use sc_telemetry::{
 	telemetry,
-	Telemetry,
+	ClientTelemetry,
 	ConnectionMessage,
+	Telemetry,
 	SUBSTRATE_INFO,
 };
 use sp_transaction_pool::MaintainedTransactionPool;
@@ -543,7 +544,7 @@ pub fn spawn_tasks<TBl, TBackend, TExPool, TRpc, TCl>(
 		BlockBackend<TBl> + BlockIdTo<TBl, Error=sp_blockchain::Error> + ProofProvider<TBl> +
 		HeaderBackend<TBl> + BlockchainEvents<TBl> + ExecutorProvider<TBl> + UsageProvider<TBl> +
 		StorageProvider<TBl, TBackend> + CallApiAt<TBl, Error=sp_blockchain::Error> +
-		Send + 'static,
+		ClientTelemetry + Send + 'static,
 		<TCl as ProvideRuntimeApi<TBl>>::Api:
 			sp_api::Metadata<TBl> +
 			sc_offchain::OffchainWorkerApi<TBl> +
@@ -560,7 +561,7 @@ pub fn spawn_tasks<TBl, TBackend, TExPool, TRpc, TCl>(
 	let SpawnTasksParams {
 		mut config,
 		task_manager,
-		mut client,
+		client,
 		on_demand,
 		backend,
 		keystore,
