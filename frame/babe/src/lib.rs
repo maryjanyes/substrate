@@ -24,7 +24,7 @@
 use codec::{Decode, Encode};
 use frame_support::{
 	decl_error, decl_module, decl_storage,
-	dispatch::DispatchResultWithPostInfo,
+	dispatch::{DispatchResultWithPostInfo, DispatchResult},
 	traits::{FindAuthor, Get, KeyOwnerProofSystem, Randomness as RandomnessT},
 	weights::{Pays, Weight},
 	Parameter,
